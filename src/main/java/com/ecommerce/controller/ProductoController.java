@@ -3,15 +3,15 @@ package com.ecommerce.controller;
 import com.ecommerce.model.Producto;
 import com.ecommerce.model.Usuario;
 import com.ecommerce.service.ProductoService;
+import com.ecommerce.service.UploadFileService;
 import org.slf4j.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.util.Optional;
 
 @Controller
@@ -22,6 +22,9 @@ public class ProductoController {
 
     @Autowired
     private ProductoService service;
+
+    @Autowired
+    private UploadFileService upload;
 
     @GetMapping("")
     public String show(Model model) {
@@ -35,10 +38,26 @@ public class ProductoController {
     }
 
     @PostMapping("/save")
-    public String save(Producto producto) {
+    public String save(Producto producto,@RequestParam("img") MultipartFile file) throws IOException {
         LOGGER.info("Este es el objeto Producto {}", producto);
         Usuario u = new Usuario(1, "", "", "", "", "", "", "");
         producto.setUsuario(u);
+
+        // Imagen
+        if (producto.getId()==null) { // Cuando se crea un producto. Primera vez
+            String nombreImagen = upload.saveImage(file);
+            producto.setImagen(nombreImagen);
+        } else {
+            if (file.isEmpty()) { // Cuando editamos el producto, pero no cambiamos la imagen
+                Producto p = new Producto();
+                p = service.get(producto.getId()).get();
+                producto.setImagen(p.getImagen());
+            } else {
+                String nombreImagen = upload.saveImage(file);
+                producto.setImagen(nombreImagen);
+            }
+        }
+
         service.save(producto);
         return "redirect:/productos";
     }
