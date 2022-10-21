@@ -120,5 +120,12 @@ public class HomeController {
         return "usuario/carrito";
     }
 
+    @GetMapping("/order")
+    public String order(Model model) {
+
+
+        return "usuario/resumenorden";
+    }
+
 
 }
