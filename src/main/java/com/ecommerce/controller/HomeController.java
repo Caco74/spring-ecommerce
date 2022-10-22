@@ -15,6 +15,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
+import java.text.Normalizer;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -174,14 +175,19 @@ public class HomeController {
 
     @PostMapping("/search")
     public String searchProduct(@RequestParam String nombre, Model model) {
-        log.info("Producto: {}", nombre);
+        log.info("Producto: {}", cleanString(nombre));
         List<Producto> productos = productoService.findAll()
-                .stream().filter(p -> p.getNombre().contains(nombre)).collect(Collectors.toList());
-
+                .stream().filter(p -> cleanString(p.getNombre()).toLowerCase().contains(nombre.toLowerCase())).collect(Collectors.toList());
         model.addAttribute("productos", productos);
 
-
         return "usuario/home";
+    }
+
+    // Eliminar acentos de un string
+    public static String cleanString(String texto) {
+        texto = Normalizer.normalize(texto, Normalizer.Form.NFD);
+        texto = texto.replaceAll("[\\p{InCombiningDiacriticalMarks}]", "");
+        return texto;
     }
 
 
